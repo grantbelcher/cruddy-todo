@@ -8,9 +8,15 @@ var items = {};
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  var id = counter.getNextUniqueId();
-  items[id] = text;
-  callback(null, { id, text });
+  counter.getNextUniqueId((err, id) => {
+    fs.writeFile(`${exports.dataDir}/${id}.txt`, text, (err) => {
+      if (err) {
+        callback(new Error(err));
+      } else {
+        callback(null, { id, text });
+      }
+    });
+  });
 };
 
 exports.readAll = (callback) => {
@@ -59,3 +65,6 @@ exports.initialize = () => {
     fs.mkdirSync(exports.dataDir);
   }
 };
+
+
+// exports.dataDir === '/data'
