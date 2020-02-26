@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('underscore');
 const counter = require('./counter');
+var Promise = require('bluebird');
+const readFilePromise = Promise.promisify(fs.readFile);
 
 var items = {};
 
@@ -23,13 +25,20 @@ exports.readAll = (callback) => {
   fs.readdir(exports.dataDir, (err, files) => {
     if (err) {
       callback(new Error(err));
-    } else {
-      var data = files.map((file) => {
-        file = file.substring(0, 5);
-        return {id: file, text: file};
-      });
-      callback(null, data);
     }
+    var data = files.map((file) => {
+      var id = file.substring(0, 5);
+      var filePath = path.join(exports.dataDir, file);
+      return readFilePromise(filePath).then((fileData) => {
+        return {
+          id: id,
+          text: fileData.toString()
+        };
+      });
+    });
+    Promise.all(data).then((items) => {
+      callback(null, items);
+    });
   });
 };
 
